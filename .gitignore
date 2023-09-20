@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# Python envs
+venv
+
+# Catch files
+.idea
