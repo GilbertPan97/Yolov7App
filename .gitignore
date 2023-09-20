@@ -36,3 +36,7 @@ venv
 
 # Catch files
 .idea
+__pycache__
+
+# PyTorch models
+*.pt
