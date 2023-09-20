@@ -1,11 +1,26 @@
 import cv2
 
-# Open the camera
-cap = cv2.VideoCapture(0)  # 0 represents the default camera, you can try other numbers if you have multiple cameras
+# Get the list of available cameras
+available_cameras = [f'Camera {i}' for i in range(10)]
+for camera_index, camera_name in enumerate(available_cameras):
+    cap = cv2.VideoCapture(camera_index)
 
-# Check if the camera is successfully opened
+    # Check if the camera is available
+    if cap.isOpened():
+        print(f"{camera_name}: Available")
+        cap.release()
+    else:
+        print(f"{camera_name}: Not Available")
+
+# Ask the user to select a camera to use
+camera_index = int(input("Enter the camera index you want to use: "))
+
+# Open the selected camera
+cap = cv2.VideoCapture(camera_index)
+
+# Check if the selected camera is successfully opened
 if not cap.isOpened():
-    print("Could not open the camera")
+    print("Could not open the selected camera")
     exit()
 
 while True:
