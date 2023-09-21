@@ -21,7 +21,7 @@ def inference():
         hyp = yaml.load(f, Loader=yaml.FullLoader)
     weigths = torch.load('yolov7-mask.pt')
     model = weigths['model']
-    model = model.half().to(device)
+    model = model.half().to(device) if device.type != "cpu" else model.float().to(device)
     _ = model.eval()
 
     image = cv2.imread('./inference/images/horses.jpg')  # 504x378 image
@@ -30,7 +30,7 @@ def inference():
     image = transforms.ToTensor()(image)
     image = torch.tensor(np.array([image.numpy()]))
     image = image.to(device)
-    image = image.half()
+    image = image.half() if device.type != "cpu" else model.float().to(device)
     output = model(image)
 
     inf_out, train_out, attn, mask_iou, bases, sem_output = output['test'], output['bbox_and_cls'], output['attn'], \
