@@ -120,6 +120,7 @@ if __name__ == '__main__':
             break
 
         # Display the image in a window
+        cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
         cv2.imshow('Camera', img_result)
 
         # Check if the 'q' key is pressed to exit the loop
