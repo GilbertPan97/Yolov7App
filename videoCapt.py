@@ -15,16 +15,20 @@ from detectron2.utils.memory import retry_if_cuda_oom
 from detectron2.layers import paste_masks_in_image
 
 
-def inference():
+def model_loader():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    with open('data/hyp.scratch.mask.yaml') as f:
-        hyp = yaml.load(f, Loader=yaml.FullLoader)
     weigths = torch.load('yolov7-mask.pt')
     model = weigths['model']
     model = model.half().to(device) if device.type != "cpu" else model.float().to(device)
     _ = model.eval()
 
-    image = cv2.imread('./inference/images/horses.jpg')  # 504x378 image
+    return model
+
+
+def inference(image, model):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    with open('data/hyp.scratch.mask.yaml') as f:
+        hyp = yaml.load(f, Loader=yaml.FullLoader)
     image = letterbox(image, 640, stride=64, auto=True)[0]
     image_ = image.copy()
     image = transforms.ToTensor()(image)
@@ -57,7 +61,7 @@ def inference():
     nimg = image[0].permute(1, 2, 0) * 255
     nimg = nimg.cpu().numpy().astype(np.uint8)
     nimg = cv2.cvtColor(nimg, cv2.COLOR_RGB2BGR)
-    nbboxes = bboxes.tensor.detach().cpu().numpy().astype(np.int)
+    nbboxes = bboxes.tensor.detach().cpu().numpy().astype(np.int32)
     pnimg = nimg.copy()
 
     for one_mask, bbox, cls, conf in zip(pred_masks_np, nbboxes, pred_cls, pred_conf):
@@ -73,17 +77,11 @@ def inference():
         # pnimg = cv2.rectangle(pnimg, (bbox[0], bbox[1]), c2, color, -1, cv2.LINE_AA)  # filled
         # pnimg = cv2.putText(pnimg, label, (bbox[0], bbox[1] - 2), 0, 0.5, [255, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
-    # coco example
-    plt.figure(figsize=(8, 8))
-    plt.axis('off')
-    plt.imshow(pnimg)
-    plt.show()
+    return pnimg
 
 
 if __name__ == '__main__':
     # Get the list of available cameras
-    inference()
-
     available_cameras = [f'Camera {i}' for i in range(3)]
     for camera_index, camera_name in enumerate(available_cameras):
         cap = cv2.VideoCapture(camera_index)
@@ -106,9 +104,15 @@ if __name__ == '__main__':
         print("Could not open the selected camera")
         exit()
 
+    # Load yolov7 model
+    yolov7_model = model_loader()
+
+    # Inference loop
     while True:
         # Read the camera image
         ret, frame = cap.read()
+
+        img_result = inference(frame, yolov7_model)
 
         # Check if the image is successfully read
         if not ret:
@@ -116,7 +120,7 @@ if __name__ == '__main__':
             break
 
         # Display the image in a window
-        cv2.imshow('Camera', frame)
+        cv2.imshow('Camera', img_result)
 
         # Check if the 'q' key is pressed to exit the loop
         if cv2.waitKey(1) & 0xFF == ord('q'):
