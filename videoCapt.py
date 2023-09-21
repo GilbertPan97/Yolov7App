@@ -30,7 +30,7 @@ def inference():
     image = transforms.ToTensor()(image)
     image = torch.tensor(np.array([image.numpy()]))
     image = image.to(device)
-    image = image.half() if device.type != "cpu" else model.float().to(device)
+    image = image.half() if device.type != "cpu" else image.float()
     output = model(image)
 
     inf_out, train_out, attn, mask_iou, bases, sem_output = output['test'], output['bbox_and_cls'], output['attn'], \
