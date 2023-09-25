@@ -15,12 +15,12 @@ from detectron2.utils.memory import retry_if_cuda_oom
 from detectron2.layers import paste_masks_in_image
 
 
-def model_loader():
+def model_loader(model_name):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    weigths = torch.load('yolov7-mask.pt')
+    weigths = torch.load(model_name)
     model = weigths['model']
-    model = model.half().to(device) if device.type != "cpu" else model.float().to(device)
     _ = model.eval()
+    model = model.half().to(device) if device.type != "cpu" else model.float().to(device)
 
     return model
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         exit()
 
     # Load yolov7 model
-    yolov7_model = model_loader()
+    yolov7_model = model_loader('yolov7-mask.pt')
 
     # Inference loop
     while True:
