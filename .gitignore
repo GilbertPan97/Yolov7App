@@ -26,6 +26,13 @@
 *.a
 *.lib
 
+# Training dataset
+*.zip
+scripts/coco/
+
+# Run record files
+runs
+
 # Executables
 *.exe
 *.out
