@@ -47,3 +47,6 @@ __pycache__
 
 # PyTorch models
 *.pt
+
+# Web App modules
+app/node_modules
