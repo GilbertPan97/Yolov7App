@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Yolo for model detect",
   "type": "module",
-  "main": "src/main.ts",
+  "main": "src/main.mjs",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",

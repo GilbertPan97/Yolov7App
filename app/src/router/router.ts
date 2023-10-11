@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import About from "../views/About.vue";
 import PlatForm from "../views/PlatForm.vue";
-// import Analysis from "../views/Analysis.vue";
+import Analysis from "../views/Analysis.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
