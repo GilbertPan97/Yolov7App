@@ -10,6 +10,7 @@ export const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "/dashboard",
+        redirect: "/dashboard/home",
         meta: {
           title: "仪表盘",
           icon: "",
