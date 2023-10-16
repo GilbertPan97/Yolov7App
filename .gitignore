@@ -51,4 +51,5 @@ __pycache__
 # Web app modules and output
 app/node_modules
 app/out
+app/builder
 app/dist
