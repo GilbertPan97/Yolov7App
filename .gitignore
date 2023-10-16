@@ -47,3 +47,8 @@ __pycache__
 
 # PyTorch models
 *.pt
+
+# Web app modules and output
+app/node_modules
+app/out
+app/dist
