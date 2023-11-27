@@ -7,8 +7,8 @@ let mainWindow
 function createWindow() {
   //创建浏览器窗口,宽高自定义具体大小你开心就好
   mainWindow = new BrowserWindow({
-    frame: false,
-    fullscreen: true,
+    width: 800,
+    height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -18,15 +18,6 @@ function createWindow() {
   // 加载应用----适用于 react 项目
   mainWindow.loadFile(path.join(__dirname, './dist/index.html'))
 }
-
-
-ipcMain.on('closed', function () {
-  mainWindow.destroy() // 关闭
-})
-
-ipcMain.on('window-min', function () {
-  mainWindow.minimize()// 最小化
-})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -42,6 +33,7 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })
+
 const isFirstInstance = app.requestSingleInstanceLock()
 if (!isFirstInstance) {
   console.log('is second instance')
@@ -63,15 +55,25 @@ if (!isFirstInstance) {
 }
 
 // 实现自定义标题栏，最小化，最大化，关闭
-// ipcMain.on("window-min", () => win.minimize());
-// ipcMain.on("window-max", () => {
-//   if (win.isMaximized()) {
-//     win.unmaximize();
-//   } else {
-//     win.maximize();
+ipcMain.on("window-min", () => mainWindow.minimize());
+ipcMain.on("window-max", () => {
+  if (mainWindow.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow.maximize();
+  }
+});
+ipcMain.on("window-close", () => {
+  mainWindow.destroy();
+});
+
+// ipcMain.on('request-camera-access', (event) => {
+//   // 在这里进行一些检查，然后决定是否授权摄像头访问
+//   // 例如，可以弹出一个询问用户是否允许的对话框
+//   const isCameraAccessGranted = true; // 替换为实际的检查逻辑
+
+//   if (isCameraAccessGranted) {
+//     event.reply('camera-access-granted');
 //   }
-// });
-// ipcMain.on("window-close", () => {
-//   win.destroy();
 // });
 
