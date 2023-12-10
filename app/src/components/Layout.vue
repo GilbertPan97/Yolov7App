@@ -27,7 +27,7 @@
       </a-layout-content>
 
       <a-layout-footer class="footer">
-        <span>ROBOT APP ©2023 Created by Wang Fafu</span>
+        <span>YOLO APP ©2023 Created by Jiabin Pan</span>
       </a-layout-footer>
     </a-layout>
   </a-layout>
