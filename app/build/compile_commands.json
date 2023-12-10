@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/build",
-  "command": "/usr/bin/g++   -isystem /home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/3rd-party/opencv/include/opencv4 -isystem /home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/3rd-party/websocketpp-0.8.2/include  -g   -o CMakeFiles/ipcBackend.dir/example.cpp.o -c /home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/example.cpp",
-  "file": "/home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/example.cpp"
-}
-]
