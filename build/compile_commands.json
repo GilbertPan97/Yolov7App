@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/gilbertpan/Documents/panjiabin/github/Yolov7App/build",
-  "command": "/usr/bin/g++  -Ddemo_EXPORTS -isystem /home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/3rd-party/opencv/include/opencv4  -g -fPIC   -o CMakeFiles/demo.dir/example.cpp.o -c /home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/example.cpp",
-  "file": "/home/gilbertpan/Documents/panjiabin/github/Yolov7App/app/backend/example.cpp"
-}
-]

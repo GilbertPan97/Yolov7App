@@ -4,7 +4,11 @@
       <img ref="viewerElement" class="viewer" />
       <!-- <video ref="viewerElement" class="viewer" autoplay></video> -->
     </div>
-    <button class="button" @click="sendMessage">Send</button>
+    <div class="widgetContainer">
+      <button class="button" @click="openCamera">Open Camera</button>
+      <button class="button" @click="closeCamera">Close Camera</button>
+      <button class="button" @click="runYolo">Run Yolo</button>
+    </div>
   </div>
 </template>
 
@@ -51,10 +55,10 @@ export default {
     connectWebSocket() {
       this.socket = new WebSocket('ws://localhost:9002');
     },
-    sendMessage() {
+    openCamera() {
       // Send message when button pressed.
       if (this.socket.readyState === WebSocket.OPEN) {
-        this.socket.send('Button pressed!');
+        this.socket.send('OpenCamera');
       } else {
         console.error('WebSocket connect is not opened.');
       }
@@ -70,6 +74,18 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.widgetContainer {
+  margin: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  margin: 5px;
 }
 
 .viewer {

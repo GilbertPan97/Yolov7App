@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
 
   <div class="camera-container">
     <video ref="videoElement" class="camera-preview"></video>
@@ -51,4 +51,18 @@ onUnmounted(() => {
   max-width: 640px;
   height: auto;
 }
+</style> -->
+
+<template>
+  <div class="camera-container">
+    
+  </div>
+</template>
+
+<script>
+
+</script>
+
+<style scoped>
+
 </style>

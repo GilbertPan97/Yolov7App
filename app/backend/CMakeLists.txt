@@ -14,9 +14,15 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/export/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/export/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/export/bin)
 
-# Add your source files
-add_executable(ipcBackend example.cpp)
+# Add camera lib
+add_library(CameraLib Camera.cpp)
+target_include_directories(CameraLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Camera.h)
+target_link_libraries(CameraLib PUBLIC ${OpenCV_LIBS})
+
+
+# Add source files
+add_executable(ipcBackend server.cpp)
 
 # Link against OpenCV
-target_link_libraries(ipcBackend ${OpenCV_LIBS} websocketpp::websocketpp)
+target_link_libraries(ipcBackend ${OpenCV_LIBS} CameraLib websocketpp::websocketpp)
 
