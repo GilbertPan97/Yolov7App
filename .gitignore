@@ -53,3 +53,6 @@ app/node_modules
 app/out
 app/builder
 app/dist
+app/build
+app/backend/3rd-party
+app/backend/export
