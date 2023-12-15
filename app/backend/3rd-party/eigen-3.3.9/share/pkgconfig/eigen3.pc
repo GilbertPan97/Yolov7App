@@ -1,9 +1,0 @@
-prefix=/home/gilbertpan/Documents/panjiabin/deps/eigen-3.3.9/install
-exec_prefix=${prefix}
-
-Name: Eigen3
-Description: A C++ template library for linear algebra: vectors, matrices, and related algorithms
-Requires:
-Version: 3.3.9
-Libs:
-Cflags: -I${prefix}/include/eigen3
