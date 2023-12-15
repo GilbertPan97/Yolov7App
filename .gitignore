@@ -62,6 +62,4 @@ app/out
 app/builder
 app/dist
 app/backend/3rd-party
-app/build
-app/backend/3rd-party
 app/backend/export
