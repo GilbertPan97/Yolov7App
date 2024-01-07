@@ -4,6 +4,8 @@ project(ipcBackend)
 
 set(DEPS ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 # config onnx build option
 set(ONNX_ROOT_DIR ${DEPS}/onnxruntime-linux-x64-gpu-1.12.1)
 option(BUILD_EXAMPLE "Build onnxruntime example" ON)
@@ -28,6 +30,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 # Add onnx lib
 add_subdirectory(ModelPredict)
+add_subdirectory(CvInference)
 
 # Build camera lib
 add_library(CameraLib Camera.cpp)
@@ -37,10 +40,15 @@ target_link_libraries(CameraLib PUBLIC ${OpenCV_LIBS})
 # Build websocket lib
 add_library(WebSocketServer WebSocketServer.cpp)
 target_include_directories(WebSocketServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(WebSocketServer PUBLIC websocketpp::websocketpp CameraLib ModelPredict)
+target_link_libraries(WebSocketServer PUBLIC websocketpp::websocketpp CameraLib CvInference)
 
 # Add source files
 add_executable(ipcBackend main.cpp)
 
 # Link against OpenCV
 target_link_libraries(ipcBackend PRIVATE WebSocketServer)
+
+add_custom_command(TARGET "ipcBackend" POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_CURRENT_SOURCE_DIR}/models/yolov8.onnx
+    $<TARGET_FILE_DIR:ipcBackend>)

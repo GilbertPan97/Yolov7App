@@ -5,16 +5,7 @@
 
 using namespace std;
 
-WebSocketServer::WebSocketServer() : onnx_mp_(true, 0){
-
-    model_path_ = "../../models/mask_rcnn_sim.onnx";
-    try {
-        bool sta = onnx_mp_.LoadModel(model_path_);
-        cout << "Info: Load model status: " << sta << endl;
-    } catch (const std::exception& e) {
-        cerr << "Error: " << e.what() << endl;
-        return;
-    }
+WebSocketServer::WebSocketServer() : inf_("./models/yolov8.onnx", cv::Size(640, 480), "classes.txt", true){
 
     server_.init_asio();
 
@@ -53,14 +44,31 @@ void WebSocketServer::on_message(websocketpp::connection_hdl hdl, MessagePtr msg
                     break;
                 }
 
-                // Onnx Predict
-                float score_thresh = 0.6f;
-		        bool status = onnx_mp_.PredictAction(currentFrame, score_thresh);
-                cv::Mat result_img = onnx_mp_.ShowPredictMask(currentFrame, score_thresh);
+                // Run inference
+                std::vector<Detection> output = inf_.runInference(currentFrame);
+                cv::Mat frame_inf = currentFrame.clone();
+                for (int i = 0; i < output.size(); ++i)
+                {
+                    Detection detection = output[i];
+
+                    cv::Rect box = detection.box;
+                    cv::Scalar color = detection.color;
+
+                    // Detection box
+                    cv::rectangle(frame_inf, box, color, 2);
+
+                    // Detection box text
+                    std::string classString = detection.className + ' ' + std::to_string(detection.confidence).substr(0, 4);
+                    cv::Size textSize = cv::getTextSize(classString, cv::FONT_HERSHEY_DUPLEX, 1, 2, 0);
+                    cv::Rect textBox(box.x, box.y - 40, textSize.width + 10, textSize.height + 20);
+
+                    cv::rectangle(frame_inf, textBox, color, cv::FILLED);
+                    cv::putText(frame_inf, classString, cv::Point(box.x + 5, box.y - 10), cv::FONT_HERSHEY_DUPLEX, 1, cv::Scalar(0, 0, 0), 2, 0);
+                }
 
                 // Convert OpenCV Mat to a byte vector
                 std::vector<uchar> buffer;
-                result_img.convertTo(convertedFrame, CV_8U);
+                frame_inf.convertTo(convertedFrame, CV_8U);
                 cv::imencode(".jpg", convertedFrame, buffer);
 
                 if (buffer.empty()) {

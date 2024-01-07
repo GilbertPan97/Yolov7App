@@ -68,7 +68,7 @@ export default {
 </script>
 
 <style scoped>
-@import "../style.css";
+@import "../assets/style.css";
 .viewerContainer {
   display: flex;
   flex-direction: column;

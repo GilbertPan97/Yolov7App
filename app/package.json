@@ -14,7 +14,7 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "wbuild": "electron-builder --win --x64",
-    "lxbuild": "electron-builder -l=deb --x64"
+    "lxbuild": "electron-builder -l=deb --x64 -c electron-builder.yml"
   },
   "dependencies": {
     "@ant-design/icons-vue": "^6.1.0",

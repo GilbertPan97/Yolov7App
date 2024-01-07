@@ -1,7 +1,7 @@
 #ifndef WEBSOCKETSERVER_H
 #define WEBSOCKETSERVER_H
 
-#include "ModelPredict.h"
+#include "inference.h"
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -25,7 +25,7 @@ public:
 
 private:
     char* model_path_;
-    ModelPredict onnx_mp_;
+    Inference inf_;
     Server server_;
 };
 
