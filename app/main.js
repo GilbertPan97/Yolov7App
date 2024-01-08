@@ -1,6 +1,8 @@
 // 引入electron并创建一个Browserwindow
-const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron')
-const path = require('path')
+const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
+const { spawn } = require('child_process');
+const path = require('path');
+
 // 保持window对象的全局引用,避免JavaScript对象被垃圾回收时,窗口被自动关闭.
 let mainWindow
 
@@ -15,6 +17,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
   })
+
   // 加载应用----适用于 react 项目
   mainWindow.loadFile(path.join(__dirname, './dist/index.html'))
 }
@@ -50,12 +53,37 @@ if (!isFirstInstance) {
       console.log('CommandOrControl+R is pressed')
       //mainWindow.reload()
     })
+
+    // 要执行的文件路径
+    const executablePath = path.join(__dirname, 'backend', 'ipcBackend');
+
+    // 子进程启动的选项
+    const spawnOptions = {
+      cwd: path.join(__dirname, 'backend'), // 设置工作目录
+    };
+
+    // 通过 child_process.spawn 启动后端可执行文件
+    const backendProcess = spawn(executablePath, [], spawnOptions);
+
+    backendProcess.stdout.on('data', (data) => {
+      console.log(`Backend stdout: ${data}`);
+    });
+
+    backendProcess.stderr.on('data', (data) => {
+      console.error(`Backend stderr: ${data}`);
+    });
+
+    backendProcess.on('close', (code) => {
+      console.log(`Backend process exited with code ${code}`);
+    });
+
     createWindow()
   })
 }
 
 // 实现自定义标题栏，最小化，最大化，关闭
 ipcMain.on("window-min", () => mainWindow.minimize());
+
 ipcMain.on("window-max", () => {
   if (mainWindow.isMaximized()) {
     mainWindow.unmaximize();
@@ -63,17 +91,9 @@ ipcMain.on("window-max", () => {
     mainWindow.maximize();
   }
 });
+
 ipcMain.on("window-close", () => {
   mainWindow.destroy();
+  backendProcess.kill();
 });
-
-// ipcMain.on('request-camera-access', (event) => {
-//   // 在这里进行一些检查，然后决定是否授权摄像头访问
-//   // 例如，可以弹出一个询问用户是否允许的对话框
-//   const isCameraAccessGranted = true; // 替换为实际的检查逻辑
-
-//   if (isCameraAccessGranted) {
-//     event.reply('camera-access-granted');
-//   }
-// });
 

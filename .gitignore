@@ -48,11 +48,18 @@ __pycache__
 # PyTorch models
 *.pt
 
+# Build folder
+build
+.vscode
+
+# Onnx Models
+*.onnx
+models
+
 # Web app modules and output
 app/node_modules
 app/out
 app/builder
 app/dist
-app/build
 app/backend/3rd-party
 app/backend/export
