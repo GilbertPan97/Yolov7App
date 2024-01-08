@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "wbuild": "electron-builder --win --x64",
+    "wbuild": "electron-builder --win --x64 -c electron-builder.yml",
     "lxbuild": "electron-builder -l=deb --x64 -c electron-builder.yml"
   },
   "dependencies": {

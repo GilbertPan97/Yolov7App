@@ -25,10 +25,9 @@ publish:
   token: $GH_TOKEN
 win:
   target: nsis
-  icon: 'public/logo.png'
 mac:
   target: dmg
-  icon: 'public/logo.png'
+  icon: 'public/logo.svg'
 linux:
   target: deb
   icon: 'public/logo.svg'
