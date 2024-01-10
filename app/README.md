@@ -15,6 +15,7 @@ YOLOSnapVision boasts posture recognition capabilities. It can analyze and recog
 
 ## Run-time Screenshots
 Explore the powerful features of YOLOSnapVision through these runtime screenshots showcasing its user interface and real-time detection results.
+
 ![Object Detection](./docs/imgs/TargetExample.png)
 
 ## Getting Started
