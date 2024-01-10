@@ -1,0 +1,47 @@
+appId: com.example.myapp
+productName: Yolov7App
+directories:
+  output: out
+files:
+  - '**/*'
+  - '!src/'
+  - '!node_modules/'
+  - '!build/'
+  - '!builder/'
+  - '!backend/'
+  - '!.vscode/'
+  # 添加需要打包的特定文件或文件夹
+  - from: backend/export/bin
+    to: backend
+  - from: backend/models
+    to: backend/models
+asar: false
+asarUnpack:
+  - 'backend/export'
+publish:
+  provider: github
+  owner: Jiabin Pan
+  repo: https://github.com/GilbertPan97/Yolov7App
+  token: $GH_TOKEN
+win:
+  target: nsis
+mac:
+  target: dmg
+  icon: 'public/logo.svg'
+linux:
+  target: deb
+  icon: 'public/logo.svg'
+  category: Development
+  synopsis: "YOLO Object Detection Tool"
+  description: |
+    YOLO Object Detection Tool is a lightweight application for running YOLO (You Only Look Once) object detection on images or videos. 
+    It provides a user-friendly interface to configure YOLO parameters, select input files, and visualize the detection results.
+
+    Features:
+    - YOLO object detection on images and videos
+    - Adjustable YOLO configuration settings
+    - User-friendly graphical interface
+
+    Note: This application requires a pre-trained YOLO model to perform object detection. Please make sure to provide the necessary model files.
+
+    Visit our GitHub repository for more information and updates: https://github.com/GilbertPan97/Yolov7App

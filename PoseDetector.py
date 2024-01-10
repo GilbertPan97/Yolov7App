@@ -51,6 +51,9 @@ def inference(image, model):
 
 
 if __name__ == '__main__':
+    print(torch.version.cuda)  # 输出CUDA版本号
+    print(torch.cuda.is_available())  # 输出CUDA是否可用
+
     # Get the list of available cameras
     available_cameras = [f'Camera {i}' for i in range(3)]
     for camera_index, camera_name in enumerate(available_cameras):
