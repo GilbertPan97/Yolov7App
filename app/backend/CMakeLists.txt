@@ -16,7 +16,7 @@ endif()
 
 # Find OpenCV package
 find_package(Boost COMPONENTS filesystem system HINTS ${DEPS}/boost_1_82_0)
-find_package(Eigen3 REQUIRED HINTS ${DEPS}/eigen)
+find_package(Eigen3 REQUIRED HINTS ${DEPS}/eigen-3.3.9)
 find_package(OpenCV REQUIRED HINTS ${DEPS}/opencv)
 find_package(websocketpp REQUIRED HINTS ${DEPS}/websocketpp-0.8.2)
 
