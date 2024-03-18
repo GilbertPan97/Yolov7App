@@ -20,3 +20,6 @@ for f in $f1 $f2 $f3; do
   curl -L $url$f -o $f && unzip -q $f -d $d && rm $f & # download, unzip, remove in background
 done
 wait # finish background tasks
+
+# Print final message
+echo "All tasks completed successfully."

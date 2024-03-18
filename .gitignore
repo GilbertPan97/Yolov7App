@@ -29,6 +29,7 @@
 # Training dataset
 *.zip
 scripts/coco/
+coco/
 
 # Run record files
 runs
