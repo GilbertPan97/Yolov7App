@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
-import About from "../views/About.vue";
-import PlatForm from "../views/PlatForm.vue";
-import Analysis from "../views/Analysis.vue";
+import Detectron from "../views/Detectron.vue";
+import Segmentation from "../views/Segmentation.vue";
+import Estimation from "../views/Estimation.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -12,23 +12,31 @@ export const routes: Array<RouteRecordRaw> = [
         path: "/dashboard",
         redirect: "/dashboard/home",
         meta: {
-          title: "仪表盘",
+          title: "Dashboard",
           icon: "",
         },
       },
       {
-        path: "/platForm",
-        component: PlatForm,
+        path: "/detectron",
+        component: Detectron,
         meta: {
-          title: "工作台",
+          title: "Detectron",
           icon: "",
         },
       },
       {
-        path: "/about",
-        component: About,
+        path: "/segmentation",
+        component: Segmentation,
         meta: {
-          title: "关于",
+          title: "Segmentation",
+          icon: "",
+        },
+      },
+      {
+        path: "/estimation",
+        component: Estimation,
+        meta: {
+          title: "Estimation",
           icon: "",
         },
       },

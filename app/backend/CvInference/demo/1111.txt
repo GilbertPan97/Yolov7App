@@ -1,0 +1,14 @@
+
+set(SRC_FILES V8Test.cpp ../../Camera.cpp)
+
+# generate project target
+add_executable(demo_cv ${SRC_FILES})
+
+target_link_libraries(demo_cv PUBLIC ${OpenCV_LIBS})
+
+target_link_libraries(demo_cv PRIVATE ${LIBS_NAME_CV})
+
+target_include_directories(demo_cv PUBLIC ${OpenCV_INCLUDE_DIRS})
+
+target_include_directories(demo_cv PRIVATE 
+            "${CMAKE_CURRENT_SOURCE_DIR}/..")
