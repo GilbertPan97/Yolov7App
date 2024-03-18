@@ -47,6 +47,7 @@ __pycache__
 
 # PyTorch models
 *.pt
+*.ptl
 
 # Build folder
 build

@@ -61,7 +61,7 @@ using namespace cv::dnn;
 
 int main(int argc, char* argv[])
 {
-	char* model_path = "../../models/mask_rcnn_sim.onnx";
+	char* model_path = "../../models/yolov7.onnx";
 	String img_dir = "../../models/imgs/";
 
 	string save_dir = "../../models/inference";
