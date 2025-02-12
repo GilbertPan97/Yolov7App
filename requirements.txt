@@ -27,3 +27,6 @@ seaborn>=0.11.0
 
 # Extras --------------------------------------
 pycocotools>=2.0  # COCO mAP
+
+# Model Export --------------------------------
+coremltools

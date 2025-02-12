@@ -17,6 +17,9 @@ endif ()
 find_package(ONNX REQUIRED)
 message(STATUS "Find package status is: ${ONNX_FOUND}")
 
+# Find the OpenSSL package
+find_package(OpenSSL REQUIRED)
+
 # config ModelPredict lib build
 set(SRC_FILES ModelPredict.cpp)
 
@@ -38,7 +41,7 @@ else()
   target_compile_definitions(${LIBS_NAME} PUBLIC MP_STATIC)  
 endif()
 
-target_link_libraries(${LIBS_NAME} PUBLIC ${OpenCV_LIBS} ${ONNX_LIBRARIES})
+target_link_libraries(${LIBS_NAME} PUBLIC ${OpenCV_LIBS} ${ONNX_LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 
 target_include_directories(${LIBS_NAME} PUBLIC 
                       ${OpenCV_INCLUDE_DIRS} 

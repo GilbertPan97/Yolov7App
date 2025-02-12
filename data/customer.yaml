@@ -1,0 +1,19 @@
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: /media/gilbertpan/Elements/CocoDataProc/out/train.txt  # number of training images
+val: /media/gilbertpan/Elements/CocoDataProc/out/val.txt      # number of validation images
+test: /media/gilbertpan/Elements/CocoDataProc/out/test.txt    # number of test images
+
+# number of classes
+nc: 36
+
+# class names
+names: [ 'Navicula sp.', 'Cyclotella sp.', 'Synedra acus', 'Achnanthes sp.',
+         'Cymbella sp.', 'Monoraphidium mirabile', 'Rhabdogloea smithii',
+         'Gomphonema sp.', 'Melosira varians', 'Cocconeis placentula', 'Oscillatoria sp.',
+         'Scenedesmus quadricauda', 'Fragilaria sp.', 'Pseudanabaena mucicola', 'Euglena sp.',
+         'Pseudanabaena limnetica', 'Nitzschia sp.', 'Chlorella vulgaris',
+         'Scenedesmus dimorphus', 'Synedra sp.', 'Chroococcus sp.', 'Chroomonas acuta',
+         'Planktothrix sp.', 'Microcystis sp.', 'Dolichospermum sp.', 'Raphidiopsis sp.',
+         'Scenedesmus sp.', 'Diatoma sp.', 'Cryptomonas ovata', 'Cryptomonas erosa',
+         'Melosira sp.', 'Cylindrospermopsis sp.', 'Aulacoseira sp.',
+         'Aulacoseira granulata var. granulata', 'Aulacoseira granulata var. angustissima', 'Cosmarium obtusatum' ]

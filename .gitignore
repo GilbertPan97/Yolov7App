@@ -64,4 +64,6 @@ app/out
 app/builder
 app/dist
 app/backend/3rd-party
-app/backend/export
+app/backend/lib
+app/backend/bin
+app/backend/imgs
