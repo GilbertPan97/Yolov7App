@@ -28,13 +28,13 @@ Ensure your Labelme dataset is organized and use the provided script for convers
 ```
 python tools/convert_labelme_to_txt.py --input_folder <input-folder> \
     --output_folder <output-folder> --label_map <categories-json> \
-    --image_format <image-format> --train_ratio <train-ratio> --val_ratio <val-ratio> --test_ratio <test-ratio>
+    --image_extension <image-format> --train_ratio <train-ratio> --val_ratio <val-ratio> --test_ratio <test-ratio>
 ```
 
 - `<input-folder>`: Directory containing images and LabelMe JSON annotation files.
 - `<output-folder>`: Directory to save the converted YOLO TXT files.
 - `<categories-json>`: Path to the category mapping JSON file.
-- `<image-format>`: Image file format (e.g., png, jpg).
+- `<image_extension>`: Image file format (e.g., png, jpg).
 - `<train-ratio>`: Ratio of the dataset for training.
 - `<val-ratio>`: Ratio of the dataset for validation.
 - `<test-ratio>`: Ratio of the dataset for testing.

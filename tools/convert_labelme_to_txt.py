@@ -11,21 +11,26 @@ Script to convert LabelMe JSON annotations to TXT format and split the dataset i
 Usage:
     python convert_labelme_to_txt.py --input_folder <path_to_labelme_json_folder> \
     --output_folder <path_to_output_dir> --label_map <path_to_label_map_json> \
-    --image_format <image_format> --train_ratio 0.7 --val_ratio 0.1 --test_ratio 0.2
+    --image_extension <image_format> --train_ratio 0.7 --val_ratio 0.1 --test_ratio 0.2
 
 Arguments:
     --input_folder    : Path to the folder containing LabelMe JSON files.
     --output_folder   : Directory to save the output datasets (TXT files and images).
     --label_map       : Path to the label mapping JSON file.
-    --image_format    : Format of the image files (default: png).
+    --image_extension : Format of the image files (default: png).
     --train_ratio     : Ratio of the dataset to use for training (default: 0.7).
     --val_ratio       : Ratio of the dataset to use for validation (default: 0.1).
     --test_ratio      : Ratio of the dataset to use for testing (default: 0.2).
 
 Example:
-    python convert_labelme_to_txt.py --input_folder /path/to/labelme_jsons \
+    python tools/convert_labelme_to_txt.py --input_folder /path/to/labelme_images_jsons \
     --output_folder /path/to/output --label_map /path/to/categories.json \
-    --image_format png --train_ratio 0.8 --val_ratio 0.1 --test_ratio 0.1
+    --image_extension png --train_ratio 0.8 --val_ratio 0.1 --test_ratio 0.1
+    
+    python tools/convert_labelme_to_txt.py --input_folder /media/gilbertpan/Elements/AlgaeDataset/labelme \
+    --output_folder /media/gilbertpan/Elements/AlgaeDataset/WorkSpace \
+    --label_map /media/gilbertpan/Elements/AlgaeDataset/WorkSpace/categories.json \
+    --image_extension png --train_ratio 0.8 --val_ratio 0.1 --test_ratio 0.1
 
 Notes:
     - The sum of train_ratio, val_ratio, and test_ratio must equal 1.0.
@@ -156,12 +161,9 @@ names: [ """
 def main():
     """Main function to parse arguments and run the conversion."""
     parser = argparse.ArgumentParser(description="Convert LabelMe JSON to TXT format and split into datasets.")
-    parser.add_argument('--input_folder', type=str, default='/media/gilbertpan/Elements/AlgaeDataset/labelme',
-                        help="Path to the folder containing images and LabelMe JSON files")
-    parser.add_argument('--output_folder', type=str, default='/media/gilbertpan/Elements/AlgaeDataset/WorkSpace',
-                        help="Path to the folder to save output TXT files")
-    parser.add_argument('--label_map', type=str, default='/media/gilbertpan/Elements/AlgaeDataset/WorkSpace/categories.json',
-                        help="Path to the label mapping JSON file")
+    parser.add_argument('--input_folder', type=str, help="Path to the folder containing images and LabelMe JSON files")
+    parser.add_argument('--output_folder', type=str, help="Path to the folder to save output TXT files")
+    parser.add_argument('--label_map', type=str, help="Path to the label mapping JSON file")
     parser.add_argument('--train_ratio', type=float, default=0.7, help="Ratio of training set")
     parser.add_argument('--test_ratio', type=float, default=0.2, help="Ratio of test set")
     parser.add_argument('--val_ratio', type=float, default=0.1, help="Ratio of validation set")
