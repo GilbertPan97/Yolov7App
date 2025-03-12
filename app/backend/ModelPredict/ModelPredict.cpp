@@ -223,7 +223,7 @@ bool ModelPredict::PredictAction(cv::Mat& inputImg, float score_thresh){
     float* pred = outputData[0].first;
 	std::vector<int64_t> shape_pred = outputData[0].second;		// Extract shapes
 
-	auto all_batch_detections = non_max_suppression(pred, shape_pred);
+	auto all_batch_detections = non_max_suppression(pred, shape_pred, score_thresh);
 
     // Process detections
     // FIXME: Only one batch supported here (assuming batch size = 1)

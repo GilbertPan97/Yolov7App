@@ -27,7 +27,7 @@ def model_loader(model_name):
 
 def inference(image, model):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    with open('data/hyp.scratch.mask.yaml') as f:
+    with open('../../data/hyp.scratch.mask.yaml') as f:
         hyp = yaml.load(f, Loader=yaml.FullLoader)
     image = letterbox(image, 640, stride=64, auto=True)[0]
     image_ = image.copy()

@@ -16,16 +16,21 @@ python train_aux.py --workers 8 --device 0 --batch-size 8 \
     --name yolov7-mask --hyp data/hyp.scratch.mask.yaml
 
 ================================================================
-python train.py --workers 8 --device 0 --batch-size 8 \
-    --data data/customer.yaml --img 640 640 \
-    --cfg cfg/training/yolov7.yaml --weights 'weights/yolov7.pt' \
+python train.py --workers 8 --device 0 --batch-size 10 \
+    --data /media/gilbertpan/Elements/AlgaeDataset/WorkSpace/dataset_config.yaml --img 640 640 \
+    --cfg cfg/training/yolov7.yaml --weights 'runs/train/box/weights/best.pt' \
     --name yolov7 --hyp data/hyp.scratch.p5.yaml
+
+python train_aux.py --workers 8 --device 0 --batch-size 8 \
+    --data data/customer.yaml --img 640 640 \
+    --cfg cfg/yolov7-mask.yaml --weights 'weights/yolov7-mask.pt' \
+    --name yolov7-mask --hyp data/hyp.scratch.mask.yaml
 
 python detect.py --weights ./runs/train/box/weights/best.pt \
     --source /media/gilbertpan/Elements/AlgaeDataset/validate/huangzhuang-2/
 
-python export.py --weights ./runs/train/box/weights/best.pt
+python export.py --weights ./runs/train/yolov72/weights/best.pt
 
-python onnx_script.py --model ./runs/train/box/weights/best.onnx \
-    --data data/customer.yaml \
+python onnx_script.py --model ./runs/train/box1/weights/best.onnx \
+    --data /media/gilbertpan/Elements/AlgaeDataset/WorkSpace/dataset_config.yaml \
     --image /media/gilbertpan/Elements/AlgaeDataset/validate/huangzhuang-2/

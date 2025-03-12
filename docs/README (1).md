@@ -126,7 +126,7 @@ python train_aux.py --workers 8 --device 0 --batch-size 16 --data data/custom.ya
 
 ## Re-parameterization
 
-See [reparameterization.ipynb](tools/reparameterization.ipynb)
+See [reparameterization.ipynb](../tools/notebooks/reparameterization.ipynb)
 
 ## Inference
 

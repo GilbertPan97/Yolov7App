@@ -340,11 +340,11 @@ def print_ndarray_data(ndarray):
         return
 
     # Print the matrix data (values of each pixel)
-    for i in range(ndarray.shape[1]):  # Loop over rows (height)
-        for j in range(ndarray.shape[2]):  # Loop over columns (width)
-            # Print pixel data for all three channels (R, G, B)
-            r, g, b = ndarray[0, i, j], ndarray[1, i, j], ndarray[2, i, j]
-            print(f"Pixel ({i}, {j}): R={r}, G={g}, B={b}")  # Print the R, G, B values
+    # for i in range(ndarray.shape[1]):  # Loop over rows (height)
+    #     for j in range(ndarray.shape[2]):  # Loop over columns (width)
+    #         # Print pixel data for all three channels (R, G, B)
+    #         r, g, b = ndarray[0, i, j], ndarray[1, i, j], ndarray[2, i, j]
+    #         print(f"Pixel ({i}, {j}): R={r}, G={g}, B={b}")  # Print the R, G, B values
 
 
 def main():

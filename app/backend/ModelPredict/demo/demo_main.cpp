@@ -110,10 +110,10 @@ std::vector<cv::String> load_categories(const cv::String& file_path) {
 
 int main(int argc, char* argv[])
 {
-	char* model_path = "../../models/yolov7.onnx";
-	String img_dir = "../../imgs";
-	String categories_path = "../../models/labels_algae.txt";
-	string save_dir = "../../imgs/runs";
+	char* model_path = "../models/yolov7.onnx";
+	String img_dir = "../imgs";
+	String categories_path = "../models/labels_algae.txt";
+	string save_dir = "../imgs/runs";
 	vector<string> vec_img_paths, vec_img_names;
 	readFileNameInDir(img_dir, vec_img_paths, vec_img_names);
 
@@ -130,10 +130,10 @@ int main(int argc, char* argv[])
 		cout << "INFO: inference at: " << std::to_string(i) << ", img name is: " << vec_img_names[i]<< endl;
 		cv::Mat img = imread(vec_img_paths[i]);
 
-		float score_thresh = 0.4f;
+		float score_thresh = 0.5f;
 		onnx_mp.LabelCategories(load_categories(categories_path));
 		bool status = onnx_mp.PredictAction(img, score_thresh);
-		cv::Mat result_img = onnx_mp.RenderInference(img, 0.0f);
+		cv::Mat result_img = onnx_mp.RenderInference(img, score_thresh);
 
 		// Save images
 		cv::String save_path = save_dir + "/" + vec_img_names[i];

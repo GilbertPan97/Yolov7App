@@ -28,11 +28,16 @@
 
 # Training dataset
 *.zip
-scripts/coco/
 coco/
 
 # Run record files
 runs
+
+# Deploy CPP source
+app/
+
+# Detector scripts
+scripts/Detectors/
 
 # Executables
 *.exe
@@ -56,14 +61,3 @@ build
 
 # Onnx Models
 *.onnx
-models
-
-# Web app modules and output
-app/node_modules
-app/out
-app/builder
-app/dist
-app/backend/3rd-party
-app/backend/lib
-app/backend/bin
-app/backend/imgs
