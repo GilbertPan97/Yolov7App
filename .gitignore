@@ -57,7 +57,16 @@ __pycache__
 
 # Build folder
 build
+bin
+lib
 .vscode
+
+# Deps folder
+third_party
+
+# Runs folder
+deploy/cpp-ort/imgs
+deploy/cpp-ort/runs
 
 # Onnx Models
 *.onnx
