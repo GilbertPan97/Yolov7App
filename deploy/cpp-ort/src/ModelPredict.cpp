@@ -70,7 +70,7 @@ ModelPredict::~ModelPredict(){
 	delete session_;
 }
 
-bool ModelPredict::LoadModel(char* model_path, std::string key){
+bool ModelPredict::LoadModel(char* model_path, TaskType task, std::string key){
     // creat session to load  model.
 	cout << "INFO: Start loading model." << endl;
 
@@ -123,6 +123,13 @@ bool ModelPredict::LoadModel(char* model_path, std::string key){
 	
 	WarmUpModel();  		// Warm up model with virtual input
 	cout << "INFO: Succeed loading model." << endl;
+
+    task_ = task;
+    if (task_ == TaskType::ObjectDet)
+        cout << "INFO: Current task type: Object Detection.\n";
+    else if (task_ == TaskType::InstanceSeg)
+        cout << "INFO: Current task type: Instance Segmentation.\n";
+    
 	return true;
 }
 
@@ -223,7 +230,15 @@ bool ModelPredict::PredictAction(cv::Mat& inputImg, float score_thresh){
     float* pred = outputData[0].first;
 	std::vector<int64_t> shape_pred = outputData[0].second;		// Extract shapes
 
-	auto all_batch_detections = non_max_suppression(pred, shape_pred);
+    float* pred_masks_proto;
+    std::vector<int64_t> shape_pred_masks_proto;
+    if (task_ == TaskType::InstanceSeg) {
+        pred_masks_proto = outputData[4].first;
+        shape_pred_masks_proto = outputData[4].second;
+    }
+
+    int nc = 36;        // BUG: temp number of calss
+	auto all_batch_detections = non_max_suppression(pred, shape_pred, nc);      
 
     // Process detections
     // FIXME: Only one batch supported here (assuming batch size = 1)
@@ -237,20 +252,46 @@ bool ModelPredict::PredictAction(cv::Mat& inputImg, float score_thresh){
 				int cls = static_cast<int>(detection[5]);  // Class
 
 				// Store the rescaled box, confidence, and class
-				bboxes_.push_back(box);  // Rescaled coordinates
-				scores_.push_back(conf);  // Confidence score
-				labels_.push_back(cls);  // Class ID
+				bboxes_.push_back(box);     // Rescaled coordinates
+				scores_.push_back(conf);    // Confidence score
+				labels_.push_back(cls);     // Class ID
+
+                if (!shape_pred_masks_proto.empty()) {
+                    std::vector<float> masks_coeff;
+                    masks_coeff.insert(masks_coeff.end(), detection.begin() + 5 + 1, detection.end());
+                    
+                    // Proc mask and resize to original image size
+                    cv::Mat instanceMask = computeInstanceMask(pred_masks_proto, shape_pred_masks_proto, masks_coeff, inferImg.size());
+                    cv::Mat cleanedMask = applyBoxMaskConstraint(instanceMask, box);
+
+                    masks_.push_back(cleanedMask);
+                }       
 			}
 
-            // Rescale boxes from [0, 1] to original image shape, rescale boxes into det_boxes
-			scale_coords(inferImg.size(), bboxes_, inputImg.size());
+            // Rescale boxes to original image shape
+			rescale_coords(inferImg.size(), bboxes_, inputImg.size());
+
+            // Recover masks to original image shape
+            if (!masks_.empty())
+                recoverMasksToOriginalSize(masks_, inputImg.size());
+            
+            // for (size_t im = 0; im < masks_.size(); im++)
+            // {   
+            //     cv::Mat fitMask;
+            //     cv::resize(masks_[im], fitMask, cv::Size(), 0.2, 0.2);
+            //     std::string maskWinName = "Mask window - " + std::to_string(im);
+            //     cv::namedWindow(maskWinName, cv::WINDOW_NORMAL);
+            //     cv::imshow(maskWinName, fitMask);
+            //     cv::waitKey(10);
+            // }
+            
         }
     }
 
 	return true;
 }
 
-cv::Mat ModelPredict::RenderInference(cv::Mat& inputImg, float scoreThreshold){
+cv::Mat ModelPredict::RenderInference(cv::Mat& inputImg, float scoreThreshold) {
     assert(bboxes_.size() == labels_.size());
 
 	// Find the maximum value in the labels vector and expand colors list
@@ -330,35 +371,32 @@ cv::Mat ModelPredict::RenderInference(cv::Mat& inputImg, float scoreThreshold){
 	}
 
 	// -----------------------Visualize masks-----------------------//
-	// float maskThreshold = 0.5;
-    // for (size_t i = 0; i < masks_.size(); ++i) {
-	// 	// Get label name
-	// 	uint64_t classIdx = labels_[i];
-	// 	string class_name;
-	// 	if (classes_name_.size()!=0)
-	// 		class_name = classes_name_[classIdx];
-	// 	else
-	// 		class_name = "target";
+    for (size_t i = 0; i < masks_.size(); ++i) {
+		// Get label name
+		uint64_t classIdx = labels_[i];
+		string class_name;
+		if (classes_name_.size()!=0)
+			class_name = classes_name_[classIdx];
+		else
+			class_name = "target";
 
-	// 	// Read color from colors list
-	// 	cv::Scalar& curColor = colors_list_[classIdx];
+		// Read color from colors list
+		cv::Scalar& curColor = colors_list_[classIdx];
 
-    //     cv::Mat curMask = masks_[i].clone();
+        cv::Mat curMask = masks_[i].clone();
 
-    //     cv::Mat filterMask = (curMask > maskThreshold);		// filter mask data
+        cv::Mat colored_img = (0.2 * curColor + 0.8 * img_render);	// splash transparent color to image
+        colored_img.convertTo(colored_img, CV_8UC3);
 
-    //     cv::Mat colored_img = (0.2 * curColor + 0.8 * img_render);	// splash transparent color to image
-    //     colored_img.convertTo(colored_img, CV_8UC3);
+        std::vector<cv::Mat> contours;
+        cv::Mat hierarchy;
+        curMask.convertTo(curMask, CV_8U);
 
-    //     std::vector<cv::Mat> contours;
-    //     cv::Mat hierarchy;
-    //     filterMask.convertTo(filterMask, CV_8U);
-
-	// 	// draw mask contour on colored image
-    //     cv::findContours(filterMask, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-    //     cv::drawContours(colored_img, contours, -1, curColor, 2, cv::LINE_8, hierarchy, 100);
-    //     colored_img.copyTo(img_render, filterMask);		// copy colored mask region to result
-    // }
+		// draw mask contour on colored image
+        cv::findContours(curMask, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+        cv::drawContours(colored_img, contours, -1, curColor, 8, cv::LINE_8, hierarchy, 100);
+        colored_img.copyTo(img_render, curMask);		// copy colored mask region to result
+    }
 
     return img_render;
 }
@@ -444,10 +482,9 @@ void ModelPredict::xywh2xyxy(std::vector<float>& box) {
 
 // Function for Non-Maximum Suppression (NMS)
 std::vector<std::vector<std::vector<float>>> ModelPredict::non_max_suppression(
-    float* pred, const std::vector<int64_t>& shape_pred, float conf_thres, float iou_thres,
-    const std::vector<int>& classes, bool agnostic, bool multi_label, int max_det) {
+    float* pred, const std::vector<int64_t>& shape_pred, const int nc, 
+    float conf_thres, float iou_thres, bool multi_label, int max_det) {
 
-    int nc = shape_pred[2] - 5;  // Number of classes
     int pred_size = shape_pred[0] * shape_pred[1] * shape_pred[2];  // Total number of predictions
     std::vector<std::vector<std::vector<float>>> output(shape_pred[0]);  // Output for each batch
 
@@ -459,7 +496,7 @@ std::vector<std::vector<std::vector<float>>> ModelPredict::non_max_suppression(
 
     // Process each prediction batch
     for (int xi = 0; xi < shape_pred[0]; ++xi) {  // Loop over batch size
-        std::vector<std::vector<float>> boxes;
+        std::vector<std::vector<float>> items_pred;
 
         // Iterate over all the boxes in the current prediction
         for (int i = 0; i < shape_pred[1]; ++i) {  // Loop over grid size
@@ -472,54 +509,162 @@ std::vector<std::vector<std::vector<float>>> ModelPredict::non_max_suppression(
                 continue;
             }
 
-            std::vector<float> box = {current_pred[0], current_pred[1], current_pred[2], current_pred[3]};  // [x_center, y_center, width, height]
-            xywh2xyxy(box);  // Convert to [x_min, y_min, x_max, y_max]
+            std::vector<float> item = {current_pred[0], current_pred[1], current_pred[2], current_pred[3]};  // [x_center, y_center, width, height]
+            xywh2xyxy(item);  // Convert to [x_min, y_min, x_max, y_max]
 
-            // Calculate class scores
+            // Get scores of all calss
             std::vector<float> class_scores;
             for (int j = 5; j < 5 + nc; ++j) {
                 class_scores.push_back(current_pred[j]);
             }
 
-            // Get the highest class score
+            // Get extra coeff: mask_coeff in yolo-seg model
+            std::vector<float> extra_coeff;
+            for (size_t j = 5 + nc; j < shape_pred[2]; ++j) {
+                extra_coeff.push_back(current_pred[j]);
+            }
+
+            // Pick the highest class score
             auto max_class_score_iter = std::max_element(class_scores.begin(), class_scores.end());
             float max_class_score = *max_class_score_iter;
             int class_idx = std::distance(class_scores.begin(), max_class_score_iter);
 
-            if (!classes.empty() && std::find(classes.begin(), classes.end(), class_idx) == classes.end()) {
-                continue;  // If class not in selected classes, skip
+            if (class_idx >= nc) {
+                // If class not in selected classes, throw an error.
+                throw std::runtime_error("Detected class ID " + std::to_string(class_idx) + " is not in the allowed class list.");  
             }
 
-            box.push_back(max_class_score);  // Add class score to the box
-            box.push_back(static_cast<float>(class_idx));  // Add class index to the box
-            boxes.push_back(box);
+            item.push_back(max_class_score);  // Add class score to the box
+            item.push_back(static_cast<float>(class_idx));  // Add class index to the box
+            if (!extra_coeff.empty()) 
+                item.insert(item.end(), extra_coeff.begin(), extra_coeff.end());
+
+            items_pred.push_back(item);
         }
 
-        // Apply NMS to filter boxes
-        std::sort(boxes.begin(), boxes.end(), [](const std::vector<float>& a, const std::vector<float>& b) {
-            return a[4] > b[4];  // Sort by confidence score (descending)
+        // Sort by confidence score (descending)
+        std::sort(items_pred.begin(), items_pred.end(), [](const std::vector<float>& a, const std::vector<float>& b) {
+            return a[4] > b[4];
         });
 
-		// Value keep is the output of one batch
+		// Apply NMS to filter boxes: Value keep is the output of one batch
         std::vector<std::vector<float>> keep;
-        while (!boxes.empty()) {
-            keep.push_back(boxes[0]);  // Keep the first (highest confidence) box
-            boxes.erase(boxes.begin());
+        while (!items_pred.empty()) {
+            keep.push_back(items_pred[0]);  // Keep the first (highest confidence) box
+            items_pred.erase(items_pred.begin());
 
             // Calculate IoU with remaining boxes and remove those with high IoU
-            boxes.erase(std::remove_if(boxes.begin(), boxes.end(), [&](const std::vector<float>& box) {
+            items_pred.erase(std::remove_if(items_pred.begin(), items_pred.end(), [&](const std::vector<float>& box) {
                 return iou(keep.back(), box) > iou_thres;
-            }), boxes.end());
+            }), items_pred.end());
 
-            if (keep.size() >= max_det) {
+            if (keep.size() >= max_det)
                 break;
-            }
         }
 
         output[xi] = keep;  // Store final selected boxes for this batch
     }
 
     return output;
+}
+
+// Sigmoid function
+inline float ModelPredict::sigmoid(float x) {
+    return 1.f / (1.f + std::exp(-x));
+}
+
+// Generate the final instance mask and convert it to cv::Mat
+cv::Mat ModelPredict::computeInstanceMask(
+    float* masks,                           // Pointer to proto masks: (1, C, H, W)
+    const std::vector<int64_t>& shape,      // shape = {1, C, H, W}
+    const std::vector<float>& mask_coeff,   // Coefficients for this instance (length = C)
+    const cv::Size& infer_size,             
+    float threshold,                        // Threshold to binarize mask
+    bool applyMorph                         // Whether to apply morphology
+) {
+    int c = static_cast<int>(shape[1]); // channels (number of bases)
+    int h = static_cast<int>(shape[2]);
+    int w = static_cast<int>(shape[3]);
+
+    // 1. Linear combination
+    cv::Mat mask = cv::Mat::zeros(h, w, CV_32F);
+    for (int i = 0; i < c; ++i) {
+        const float* proto = masks + i * h * w;
+        cv::Mat protoMat(h, w, CV_32F, const_cast<float*>(proto)); // No copy
+        mask += protoMat * mask_coeff[i];
+    }
+
+    // 2. Sigmoid activation
+    cv::Mat activatedMask;
+    cv::exp(-mask, activatedMask);
+    activatedMask = 1.0f / (1.0f + activatedMask);
+
+    // 3. Resize to original image size
+    cv::Mat resizedMask;
+    cv::resize(activatedMask, resizedMask, infer_size, 0, 0, cv::INTER_LINEAR);
+
+    // 4. Thresholding to binarize
+    cv::Mat binaryMask;
+    cv::threshold(resizedMask, binaryMask, threshold, 1.0, cv::THRESH_BINARY);
+
+    // 5. Optional: morphological operations to clean up noise
+    if (applyMorph) {
+        cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::morphologyEx(binaryMask, binaryMask, cv::MORPH_OPEN, kernel);
+        cv::morphologyEx(binaryMask, binaryMask, cv::MORPH_CLOSE, kernel);
+    }
+
+    return binaryMask;
+}
+
+// Suppress all mask regions outside the box (x1, y1, x2, y2)
+cv::Mat ModelPredict::applyBoxMaskConstraint(const cv::Mat& mask, const std::array<float, 4>& box_xyxy) {
+    CV_Assert(mask.type() == CV_32F); // Ensure float mask
+
+    // Clone the input mask
+    cv::Mat masked = cv::Mat::zeros(mask.size(), CV_32F);
+
+    // Clamp coordinates to image bounds
+    int x1 = std::clamp(static_cast<int>(std::floor(box_xyxy[0])), 0, mask.cols - 1);
+    int y1 = std::clamp(static_cast<int>(std::floor(box_xyxy[1])), 0, mask.rows - 1);
+    int x2 = std::clamp(static_cast<int>(std::ceil(box_xyxy[2])), 0, mask.cols - 1);
+    int y2 = std::clamp(static_cast<int>(std::ceil(box_xyxy[3])), 0, mask.rows - 1);
+
+    // Copy only the box region from original mask
+    mask(cv::Rect(x1, y1, x2 - x1, y2 - y1)).copyTo(masked(cv::Rect(x1, y1, x2 - x1, y2 - y1)));
+
+    return masked;
+}
+
+// Reverse letterbox: recover mask alignment to original image size by removing padding and rescaling
+void ModelPredict::recoverMasksToOriginalSize(
+    std::vector<cv::Mat>& masks, 
+    const cv::Size& oriImgSize, 
+    const cv::Size& modelInputSize) 
+{
+    int model_w = modelInputSize.width;
+    int model_h = modelInputSize.height;
+    int ori_w = oriImgSize.width;
+    int ori_h = oriImgSize.height;
+
+    // Compute scale and padding
+    float scale = std::min(static_cast<float>(model_w) / ori_w, static_cast<float>(model_h) / ori_h);
+    int new_w = static_cast<int>(round(ori_w * scale));
+    int new_h = static_cast<int>(round(ori_h * scale));
+    int pad_x = (model_w - new_w) / 2;
+    int pad_y = (model_h - new_h) / 2;
+
+    // Define crop ROI
+    cv::Rect roi(pad_x, pad_y, new_w, new_h);
+
+    for (auto& mask : masks) {
+        CV_Assert(mask.type() == CV_32F);
+        CV_Assert(mask.rows == model_h && mask.cols == model_w);
+
+        // Crop and resize
+        cv::Mat cropped = mask(roi);
+        cv::resize(cropped, mask, oriImgSize, 0, 0, cv::INTER_LINEAR);  // in-place overwrite
+    }
 }
 
 // Function to Clip Coordinates within bounds of img0_shape
@@ -534,7 +679,7 @@ void ModelPredict::clip_coords(std::vector<std::array<float, 4>>& coords, const 
 }
 
 // Function to Scale Coordinates from img1 to img0
-void ModelPredict::scale_coords(const cv::Size& img1_shape, std::vector<std::array<float, 4>>& coords,
+void ModelPredict::rescale_coords(const cv::Size& img1_shape, std::vector<std::array<float, 4>>& coords,
                                 const cv::Size& img0_shape, const std::vector<std::vector<float>>& ratio_pad) {
     float gain, pad_x, pad_y;
 

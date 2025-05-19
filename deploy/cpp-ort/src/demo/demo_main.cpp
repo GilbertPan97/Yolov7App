@@ -125,7 +125,7 @@ std::vector<cv::String> load_categories(const cv::String& file_path) {
 
 int main(int argc, char* argv[])
 {
-	char* model_path = "../models/yolov7.onnx";
+	char* model_path = "../models/yolov7-seg.onnx";
 	String img_dir = "../imgs";
 	String categories_path = "../models/labels_algae.txt";
 	string save_dir = "../runs";
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 
 	// construct ModelPredict object and load model
 	ModelPredict onnx_mp(true, 0, 8);
-	auto sta = onnx_mp.LoadModel(model_path);
+	auto sta = onnx_mp.LoadModel(model_path, ModelPredict::TaskType::InstanceSeg);
 	if (sta==false){
 		std:cerr << "ERROR: Mode load fail.\n";
 		return -1;

@@ -15,6 +15,14 @@
 #define _CRT_SECURE_NO_WARNINGS 
 
 class MP_EXPORT ModelPredict {
+public:
+    /** @brief Task type enumeration. */
+    enum class TaskType {
+        ObjectDet,      ///< Object Detection
+        InstanceSeg,    ///< Instance Segmentation
+        Other           ///< Other Task
+    };
+
 private:
 	// Ort handle
 	Ort::Env env_;
@@ -26,6 +34,7 @@ private:
 	// model info
 	std::vector<char*> input_names_;
 	std::vector<char*> output_names_;
+	TaskType task_;
 	std::vector<Ort::AllocatedStringPtr> input_names_ptr_;
 	std::vector<Ort::AllocatedStringPtr> output_names_ptr_;		// avoid names pointer to be released.
 
@@ -61,7 +70,7 @@ public:
 	 * @param model_path (char*): Path to the onnx model file.
 	 * @return (bool) True if the model was loaded successfully, false otherwise.
 	 */
-	bool LoadModel(char* model_path, std::string key = "");
+	bool LoadModel(char* model_path, TaskType task = TaskType::ObjectDet, std::string key = "");
 
 	bool LabelCategories(std::vector<cv::String> classes);
 
@@ -124,13 +133,29 @@ private:
     // Function to Convert xywh to xyxy
     void xywh2xyxy(std::vector<float>& box);
 
-	std::vector<std::vector<std::vector<float>>> non_max_suppression(float* pred, const std::vector<int64_t>& shape_pred,
+	std::vector<std::vector<std::vector<float>>> non_max_suppression(float* pred, const std::vector<int64_t>& shape_pred, const int nc,
                                                         float conf_thres = 0.25f, float iou_thres = 0.45f,
-                                                        const std::vector<int>& classes = {}, bool agnostic = false,
                                                         bool multi_label = false, int max_det = 300);
+						
+	inline float sigmoid(float x);
 
-	// Private function to Scale Coordinates from img1 to img0
-    void scale_coords(const cv::Size& img1_shape, std::vector<std::array<float, 4>>& coords,
+	cv::Mat computeInstanceMask(
+		float* masks,                           // Pointer to proto masks: (1, C, H, W)
+		const std::vector<int64_t>& shape,      // shape = {1, C, H, W}
+		const std::vector<float>& mask_coeff,   // Coefficients for this instance (length = C)
+		const cv::Size& infer_size,             
+		float threshold = 0.5f,                 // Threshold to binarize mask
+		bool applyMorph = true                  // Whether to apply morphology
+	);
+
+	cv::Mat applyBoxMaskConstraint(const cv::Mat& mask, const std::array<float, 4>& box_xyxy);
+
+	void recoverMasksToOriginalSize(std::vector<cv::Mat>& masks, 
+		const cv::Size& oriImgSize, 
+		const cv::Size& modelInputSize = cv::Size(640, 640));
+
+	// Private function to Rescale Coordinates from img1 to img0
+    void rescale_coords(const cv::Size& img1_shape, std::vector<std::array<float, 4>>& coords,
                       const cv::Size& img0_shape, const std::vector<std::vector<float>>& ratio_pad = {});
 
     // Private function to Clip Coordinates within bounds of img0_shape
@@ -150,6 +175,8 @@ private:
 	void GetColorsList(std::vector<cv::Scalar>& colors_list, size_t num_classes);
 	void WarmUpModel();
 	std::vector<uint8_t> DecryptModelFile(const char* encrypted_model_path, const std::string& key);
+
+
 };
 
 #endif // MODELPREDICT_H
