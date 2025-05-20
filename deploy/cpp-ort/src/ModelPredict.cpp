@@ -229,15 +229,17 @@ bool ModelPredict::PredictAction(cv::Mat& inputImg, float score_thresh){
     // Process predictions
     float* pred = outputData[0].first;
 	std::vector<int64_t> shape_pred = outputData[0].second;		// Extract shapes
+    int nc = shape_pred[2] - 1 - 4;
 
     float* pred_masks_proto;
     std::vector<int64_t> shape_pred_masks_proto;
     if (task_ == TaskType::InstanceSeg) {
         pred_masks_proto = outputData[4].first;
         shape_pred_masks_proto = outputData[4].second;
+
+        nc -= 32;       // TODO: 32 is the dimension of mask coeff
     }
 
-    int nc = 36;        // BUG: temp number of calss
 	auto all_batch_detections = non_max_suppression(pred, shape_pred, nc);      
 
     // Process detections

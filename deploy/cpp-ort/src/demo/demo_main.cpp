@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 	}
 
 	cout << "INFO: All inference images: " << vec_img_paths.size() << endl;
-	for (size_t i = 0; i < vec_img_paths.size(); i++){
+	for (size_t i = 1; i < vec_img_paths.size(); i++){
 		cout << "INFO: inference at: " << std::to_string(i) << ", img name is: " << vec_img_names[i]<< endl;
 		cv::Mat img = imread(vec_img_paths[i]);
 
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
 		int initial_width = 800, initial_height = 600;
 		cv::resizeWindow(win_name, initial_width, initial_height);
 		cv::imshow(win_name, result_img);
-		cv::waitKey(10);
+		cv::waitKey(0);
 	}
 	return 0;
 }

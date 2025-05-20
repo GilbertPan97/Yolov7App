@@ -55,6 +55,9 @@ __pycache__
 *.pt
 *.ptl
 
+# Onnx Models
+*.onnx
+
 # Build folder
 build
 bin
@@ -67,6 +70,13 @@ third_party
 # Runs folder
 deploy/cpp-ort/imgs
 deploy/cpp-ort/runs
+deploy/csharp-ort/imgs
+deploy/csharp-ort/runs
 
-# Onnx Models
-*.onnx
+# Build folder
+deploy/csharp-ort/bin
+deploy/csharp-ort/obj
+
+# Local vscode configuration
+.vscode
+
