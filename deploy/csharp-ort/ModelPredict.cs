@@ -276,25 +276,27 @@ public class ModelPredict
         return true;
     }
 
-    public List<List<Point2f>> GetBoundingBoxes()
-    {
-        var bboxes = new List<List<Point2f>>();
+    // public List<List<Point2f>> GetBoundingBoxes()
+    // {
+    //     var bboxes = new List<List<Point2f>>();
 
-        foreach (var box in bboxes_) // box: List<float> or float[]
-        {
-            var cvBox = new List<Point2f>
-            {
-                new Point2f(box[0], box[1]),
-                new Point2f(box[2], box[3])
-            };
-            bboxes.Add(cvBox);
-        }
+    //     foreach (var box in bboxes_) // box: List<float> or float[]
+    //     {
+    //         var cvBox = new List<Point2f>
+    //         {
+    //             new Point2f(box[0], box[1]),
+    //             new Point2f(box[2], box[3])
+    //         };
+    //         bboxes.Add(cvBox);
+    //     }
 
-        return bboxes;
-    }
+    //     return bboxes;
+    // }
 
     // public List<List<Point2f>> GetMinBoundingBoxes() { return null; }
     // public List<float> GetBoundingBoxAngles() { return null; }
+
+    public List<float[]> GetBoundingBoxes() => bboxes_;
 
     public List<Mat> GetPredictMasks() => masks_;
 

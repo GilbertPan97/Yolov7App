@@ -18,7 +18,7 @@ class Program
         ReadFileNamesInDir(imgDir, out imgPaths, out imgNames);
 
         // Create ModelPredict instance (adjust GPU settings as needed)
-        var modelPredict = new ModelPredict(withGpu: true, deviceId: 0, thread: 1);
+        var modelPredict = new ModelPredict(withGpu: false, deviceId: 0, thread: 1);
 
         // Load the model
         bool loaded = modelPredict.LoadModel(modelPath, ModelPredict.TaskType.InstanceSeg);
@@ -32,6 +32,9 @@ class Program
         List<string> categories = LoadCategories(categoriesPath);
         modelPredict.LabelCategories(categories);
 
+        // Create inference render
+        var infRender = new Renderer(categories);
+
         Console.WriteLine($"INFO: All inference images: {imgPaths.Count}");
 
         for (int i = 0; i < imgPaths.Count; i++)
@@ -42,18 +45,24 @@ class Program
             float scoreThresh = 0.4f;
 
             bool status = modelPredict.PredictAction(img, scoreThresh);
-            // Mat resultImg = modelPredict.RenderInference(img, 0.0f);
+            infRender.SetImage(img);
 
-            // // Save image
-            // string savePath = Path.Combine(saveDir, imgNames[i]);
-            // Cv2.ImWrite(savePath, resultImg);
+            Mat resultImg = infRender.RenderInference(0.6f,
+                modelPredict.GetBoundingBoxes(),
+                modelPredict.GetPredictMasks(),
+                modelPredict.GetPredictLabels(),
+                modelPredict.GetPredictScores());
 
-            // // Display
-            // string winName = "Inference result";
-            // Cv2.NamedWindow(winName, WindowFlags.Normal);
-            // Cv2.ResizeWindow(winName, 800, 600);
-            // Cv2.ImShow(winName, resultImg);
-            // Cv2.WaitKey(10);
+            // Display
+            string winName = "Inference result";
+            Cv2.NamedWindow(winName, WindowFlags.Normal);
+            Cv2.ResizeWindow(winName, 800, 600);
+            Cv2.ImShow(winName, resultImg);
+            Cv2.WaitKey(10);
+            
+            // Save image
+            string savePath = Path.Combine(saveDir, imgNames[i]);
+            Cv2.ImWrite(savePath, resultImg);
         }
 
         Console.WriteLine("Inference done.");
