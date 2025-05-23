@@ -154,7 +154,7 @@ public class ModelPredict
 
         return true;
     }
-    
+
     /// <summary>
     /// Loads a list of class label names used for predictions.
     /// </summary>
@@ -174,7 +174,7 @@ public class ModelPredict
         Console.WriteLine($"INFO: Loaded {classesName_.Count} class labels (including empty lines).");
         return true;
     }
-    
+
     /// <summary>
     /// Runs inference on the given image and saves prediction results including bounding boxes, labels, scores, and masks (if applicable).
     /// </summary>
@@ -285,7 +285,6 @@ public class ModelPredict
                     // // DEBUG: View cleaned mask and infer image
                     // Cv2.ImShow("Cleaned Mask", cleanedMask);
                     // Cv2.WaitKey(10);
-
                     // Cv2.ImShow("Infer image", inferImg);
                     // Cv2.WaitKey(0);
 
@@ -304,31 +303,25 @@ public class ModelPredict
         return true;
     }
 
-    // public List<List<Point2f>> GetBoundingBoxes()
-    // {
-    //     var bboxes = new List<List<Point2f>>();
-
-    //     foreach (var box in bboxes_) // box: List<float> or float[]
-    //     {
-    //         var cvBox = new List<Point2f>
-    //         {
-    //             new Point2f(box[0], box[1]),
-    //             new Point2f(box[2], box[3])
-    //         };
-    //         bboxes.Add(cvBox);
-    //     }
-
-    //     return bboxes;
-    // }
-
-    // public List<List<Point2f>> GetMinBoundingBoxes() { return null; }
-    // public List<float> GetBoundingBoxAngles() { return null; }
-
     /// <summary>
     /// Gets the list of predicted bounding boxes from the last inference.
     /// </summary>
     /// <returns>A list of bounding boxes represented by float arrays [x1, y1, x2, y2].</returns>
     public List<float[]> GetBoundingBoxes() => bboxes_;
+
+    /// <summary>
+    /// Get the minimum bounding boxes (rotated rectangles) calculated from masks.
+    /// If not already calculated, will compute them.
+    /// </summary>
+    /// <returns>List of float arrays representing 4 points of rotated rectangles (x0,y0,x1,y1,x2,y2,x3,y3)</returns>
+    public List<float[]> GetMinBoundingBoxes()
+    {
+        if (minbboxes_.Count != masks_.Count)
+        {
+            CalculateMinBoundingBoxes();
+        }
+        return minbboxes_;
+    }
 
     /// <summary>
     /// Gets the list of instance masks predicted in the last inference.
@@ -350,6 +343,13 @@ public class ModelPredict
 
 
     // ===================== Private methods =====================//
+    /// <summary>
+    /// Performs a warm-up run on the ONNX model to initialize internal states and optimize performance.
+    /// It creates dummy input tensors filled with constant values to execute one inference pass.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if input or output names are not set, or if the warm-up inference fails.
+    /// </exception>
     private void WarmUpModel()
     {
         if (inputNames_ == null || inputNames_.Count == 0)
@@ -388,8 +388,20 @@ public class ModelPredict
         }
     }
 
-    public Mat Letterbox(Mat img, Size newShape, Scalar? color = null, 
-                        bool autoResize = false, bool scaleFill = false, 
+    /// <summary>
+    /// Resizes and pads an image to fit into a specified shape while maintaining the aspect ratio.
+    /// This is commonly used to prepare images for input into neural networks.
+    /// </summary>
+    /// <param name="img">The input image to be resized and padded.</param>
+    /// <param name="newShape">The target size to fit the image into.</param>
+    /// <param name="color">Optional padding color (default is gray [114,114,114]).</param>
+    /// <param name="autoResize">If true, adjusts padding to be multiples of the stride.</param>
+    /// <param name="scaleFill">If true, stretches the image to fill the new shape without preserving aspect ratio.</param>
+    /// <param name="scaleUp">If false, prevents upscaling the image beyond its original size.</param>
+    /// <param name="stride">The stride size used for auto padding alignment (default 32).</param>
+    /// <returns>The resized and padded image as a new Mat object.</returns>
+    public static Mat Letterbox(Mat img, Size newShape, Scalar? color = null,
+                        bool autoResize = false, bool scaleFill = false,
                         bool scaleUp = true, int stride = 32)
     {
         Scalar padColor = color ?? new Scalar(114, 114, 114);
@@ -442,7 +454,17 @@ public class ModelPredict
         return paddedImg;
     }
 
-    private Tensor<float> CreateTensor(Mat mat, int[] dims, List<float> valueBuffer, string format)
+    /// <summary>
+    /// Creates a tensor from an OpenCV Mat image, converting to the desired shape and format.
+    /// Supports BGR->RGB conversion and normalization to [0,1].
+    /// </summary>
+    /// <param name="mat">Input OpenCV Mat image (assumed BGR format)</param>
+    /// <param name="dims">Target tensor dimensions in NCHW format (e.g. [1, 3, height, width])</param>
+    /// <param name="valueBuffer">Buffer to hold the tensor data (cleared and filled inside)</param>
+    /// <param name="format">Format string: "CHW" or others (default HWC)</param>
+    /// <returns>Tensor of float matching the dims shape</returns>
+    /// <exception cref="Exception">Throws if dims length, batch size, or channels mismatch</exception>
+    private static Tensor<float> CreateTensor(Mat mat, int[] dims, List<float> valueBuffer, string format)
     {
         int rows = mat.Rows;
         int cols = mat.Cols;
@@ -519,7 +541,18 @@ public class ModelPredict
         return new DenseTensor<float>(valueBuffer.ToArray(), dims);
     }
 
-    private List<List<List<float>>> NonMaxSuppression(
+    /// <summary>
+    /// Performs Non-Maximum Suppression (NMS) on model predictions to filter overlapping bounding boxes.
+    /// </summary>
+    /// <param name="pred">Flattened prediction array containing bounding boxes and scores.</param>
+    /// <param name="shapePred">Shape of the prediction tensor, typically [batch, numBoxes, boxElements].</param>
+    /// <param name="nc">Number of classes.</param>
+    /// <param name="confThresh">Confidence threshold to filter low-confidence boxes.</param>
+    /// <param name="iouThresh">IoU threshold to suppress overlapping boxes.</param>
+    /// <param name="multiLabel">If true, allows multiple labels per box (not used in this implementation).</param>
+    /// <param name="maxDet">Maximum number of detections to keep per image.</param>
+    /// <returns>A list of detections per batch, each detection is a list of floats [x1, y1, x2, y2, confidence, class, ...].</returns>
+    private static List<List<List<float>>> NonMaxSuppression(
         float[] pred, long[] shapePred, int nc,
         float confThresh = 0.25f, float iouThresh = 0.45f,
         bool multiLabel = false, int maxDet = 300)
@@ -597,7 +630,13 @@ public class ModelPredict
 
         return output;
     }
-    private void XYWH2XYXY(List<float> box)
+
+    /// <summary>
+    /// Convert bounding box from [center_x, center_y, width, height] format
+    /// to [x_min, y_min, x_max, y_max] format.
+    /// </summary>
+    /// <param name="box">List of floats representing a box in XYWH format.</param>
+    private static void XYWH2XYXY(List<float> box)
     {
         float x = box[0], y = box[1], w = box[2], h = box[3];
         box[0] = x - w / 2; // x_min
@@ -606,7 +645,13 @@ public class ModelPredict
         box[3] = y + h / 2; // y_max
     }
 
-    private float IoU(List<float> box1, List<float> box2)
+    /// <summary>
+    /// Calculate Intersection over Union (IoU) between two bounding boxes in XYXY format.
+    /// </summary>
+    /// <param name="box1">First bounding box [x_min, y_min, x_max, y_max]</param>
+    /// <param name="box2">Second bounding box [x_min, y_min, x_max, y_max]</param>
+    /// <returns>IoU value between 0 and 1.</returns>
+    private static float IoU(List<float> box1, List<float> box2)
     {
         float x1 = Math.Max(box1[0], box2[0]);
         float y1 = Math.Max(box1[1], box2[1]);
@@ -620,7 +665,17 @@ public class ModelPredict
         return interArea / (area1 + area2 - interArea + 1e-6f);
     }
 
-    public Mat ComputeInstanceMask(float[] masks, long[] shape, List<float> maskCoeff, Size inferSize, float threshold = 0.5f, bool applyMorph = true)
+    /// <summary>
+    /// Compute an instance segmentation mask using prototype masks and mask coefficients.
+    /// </summary>
+    /// <param name="masks">Flattened array of prototype masks (channels x height x width).</param>
+    /// <param name="shape">Shape array: [batch, channels, height, width].</param>
+    /// <param name="maskCoeff">Mask coefficients for linear combination.</param>
+    /// <param name="inferSize">Target output size (width, height).</param>
+    /// <param name="threshold">Threshold for binarizing mask.</param>
+    /// <param name="applyMorph">Whether to apply morphological open and close operations.</param>
+    /// <returns>Binary mask as OpenCV Mat.</returns>
+    public static Mat ComputeInstanceMask(float[] masks, long[] shape, List<float> maskCoeff, Size inferSize, float threshold = 0.5f, bool applyMorph = true)
     {
         int c = (int)shape[1]; // channels (proto count)
         int h = (int)shape[2];
@@ -669,7 +724,16 @@ public class ModelPredict
         return binary;
     }
 
-    private Mat ApplyBoxMaskConstraint(Mat mask, float[] boxXYXY)
+    /// <summary>
+    /// Applies a bounding box constraint to the given mask.
+    /// The output mask retains values only within the bounding box region,
+    /// while all other areas are set to zero.
+    /// </summary>
+    /// <param name="mask">Input mask as a single-channel float matrix (CV_32F).</param>
+    /// <param name="boxXYXY">Bounding box coordinates in [x_min, y_min, x_max, y_max] format.</param>
+    /// <returns>A new mask constrained within the bounding box.</returns>
+    /// <exception cref="ArgumentException">Thrown if input mask type is not CV_32F.</exception>
+    private static Mat ApplyBoxMaskConstraint(Mat mask, float[] boxXYXY)
     {
         if (mask.Type() != MatType.CV_32F)
             throw new ArgumentException("Input mask must be CV_32F type.");
@@ -691,9 +755,21 @@ public class ModelPredict
         return constrained;
     }
 
-    // Rescale coordinates from model input size to original image size
-    // Also clip the coordinates to ensure they remain within bounds
-    private void RescaleCoords(Size img1Shape, List<float[]> coords, Size img0Shape, List<List<float>> ratioPad = null)
+    /// <summary>
+    /// Rescales bounding box coordinates from a model input size back to the original image size.
+    /// Also removes any padding added during preprocessing and clips coordinates to image boundaries.
+    /// </summary>
+    /// <param name="img1Shape">Size of the model input image (width, height).</param>
+    /// <param name="coords">List of bounding boxes, each box is a float array [x_min, y_min, x_max, y_max].</param>
+    /// <param name="img0Shape">Size of the original image (width, height).</param>
+    /// <param name="ratioPad">
+    /// Optional parameter containing precomputed scaling and padding values:
+    /// ratioPad[0][0] = scale factor (gain),
+    /// ratioPad[1][0] = padding in X,
+    /// ratioPad[1][1] = padding in Y.
+    /// If not provided, the function computes these values automatically.
+    /// </param>
+    private static void RescaleCoords(Size img1Shape, List<float[]> coords, Size img0Shape, List<List<float>> ratioPad = null)
     {
         float gain, padX, padY;
 
@@ -733,9 +809,18 @@ public class ModelPredict
         }
     }
 
-    // Recover instance masks back to the original image size
-    // This reverses the effect of letterbox padding and resizing
-    private void RecoverMasksToOriginalSize(List<Mat> masks, Size oriImgSize, Size modelInputSize = default)
+    /// <summary>
+    /// Recovers instance masks from the model input size to the original image size.
+    /// This reverses the effect of letterbox resizing and padding applied during model preprocessing.
+    /// </summary>
+    /// <param name="masks">List of masks as CV_32F Mats with model input size.</param>
+    /// <param name="oriImgSize">Original image size (width, height).</param>
+    /// <param name="modelInputSize">
+    /// Model input size (width, height).
+    /// If default(Size) is passed, behavior is undefined (model input size must be provided).
+    /// </param>
+    /// <exception cref="Exception">Thrown if mask type or dimensions do not match expected model input format.</exception>
+    private static void RecoverMasksToOriginalSize(List<Mat> masks, Size oriImgSize, Size modelInputSize = default)
     {
         int modelW = modelInputSize.Width;
         int modelH = modelInputSize.Height;
@@ -774,6 +859,65 @@ public class ModelPredict
         }
     }
 
-    // private void ClipCoords(List<float[]> coords, Size img0Shape) { }
-    // private List<float> ExtractTensorData(DenseTensor<float> tensor) { return null; }
+    /// <summary>
+    /// Calculate minimum area bounding boxes (rotated rectangles) from masks_
+    /// and store the results in minbboxes_ as float arrays of 8 elements (4 points).
+    /// </summary>
+    private void CalculateMinBoundingBoxes()
+    {
+        minbboxes_.Clear();
+
+        for (int i = 0; i < masks_.Count; i++)
+        {
+            Mat mask = masks_[i];
+
+            // Convert mask to 8-bit single channel if needed
+            if (mask.Type() != MatType.CV_8U)
+            {
+                Mat mask8U = new Mat();
+                mask.ConvertTo(mask8U, MatType.CV_8U, 255.0);
+                mask = mask8U;
+            }
+
+            // Find contours from the mask
+            Point[][] contours;
+            HierarchyIndex[] hierarchy;
+            Cv2.FindContours(mask, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+            if (contours.Length == 0)
+            {
+                // No contour found, add an empty box
+                minbboxes_.Add(new float[8] { 0, 0, 0, 0, 0, 0, 0, 0 });
+                continue;
+            }
+
+            // Find the largest contour by area
+            int maxContourIdx = 0;
+            double maxArea = 0;
+            for (int c = 0; c < contours.Length; c++)
+            {
+                double area = Cv2.ContourArea(contours[c]);
+                if (area > maxArea)
+                {
+                    maxArea = area;
+                    maxContourIdx = c;
+                }
+            }
+
+            // Get the minimum area rotated rectangle for the largest contour
+            RotatedRect minRect = Cv2.MinAreaRect(contours[maxContourIdx]);
+
+            // Extract the 4 vertices of the rectangle
+            Point2f[] pts = minRect.Points();
+
+            float[] boxPts = new float[8];
+            for (int j = 0; j < 4; j++)
+            {
+                boxPts[j * 2] = pts[j].X;
+                boxPts[j * 2 + 1] = pts[j].Y;
+            }
+
+            minbboxes_.Add(boxPts);
+        }
+    }
 }
