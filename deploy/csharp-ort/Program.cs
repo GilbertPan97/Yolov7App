@@ -40,9 +40,9 @@ class Program
         Console.WriteLine($"INFO: All inference images: {imgPaths.Count}");
 
         // MP4 settings
-        int frameWidth = 800;
-        int frameHeight = 600;
-        int fps = 2;                // 100ms per frame
+        int frameWidth = 5472;
+        int frameHeight = 3648;
+        int fps = 1;                // 100ms per frame
         int fourcc = VideoWriter.FourCC('a', 'v', 'c', '1');
         using var videoWriter = new VideoWriter(videoPath, fourcc, fps, new Size(frameWidth, frameHeight));
 

@@ -77,6 +77,9 @@ deploy/csharp-ort/runs
 deploy/csharp-ort/bin
 deploy/csharp-ort/obj
 
+# BenTeLe project related
+deploy/csharp-ort/models/labels_btl.txt
+
 # Local vscode configuration
 .vscode
 
