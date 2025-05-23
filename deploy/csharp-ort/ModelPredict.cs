@@ -8,7 +8,12 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 
 public class ModelPredict
 {
-    // Enum for task type
+    /// <summary>
+    /// Defines the type of prediction task for the model.
+    /// <para>ObjectDet: Object Detection task.</para>
+    /// <para>InstanceSeg: Instance Segmentation task.</para>
+    /// <para>Other: Other types of tasks.</para>
+    /// </summary>
     public enum TaskType
     {
         ObjectDet,
@@ -46,6 +51,12 @@ public class ModelPredict
 
 
     // ===================== Constructor & Destructor =====================//
+    /// <summary>
+    /// Initialize the ModelPredict instance.
+    /// </summary>
+    /// <param name="withGpu">If true, try to enable CUDA GPU acceleration; otherwise use CPU.</param>
+    /// <param name="deviceId">CUDA device ID to use when GPU is enabled.</param>
+    /// <param name="thread">Number of CPU threads for intra-op parallelism.</param>
     public ModelPredict(bool withGpu = false, int deviceId = 0, int thread = 1)
     {
         // Create session options
@@ -85,6 +96,12 @@ public class ModelPredict
 
 
     // ===================== Public methods =====================//
+    /// <summary>
+    /// Loads an ONNX model from the specified path and sets the task type.
+    /// </summary>
+    /// <param name="modelPath">The path to the ONNX model file.</param>
+    /// <param name="task">The task type (Object Detection or Instance Segmentation).</param>
+    /// <returns>True if the model was loaded successfully, false otherwise.</returns>
     public bool LoadModel(string modelPath, TaskType task = TaskType.ObjectDet)
     {
         Console.WriteLine("INFO: Start loading model.");
@@ -138,6 +155,11 @@ public class ModelPredict
         return true;
     }
     
+    /// <summary>
+    /// Loads a list of class label names used for predictions.
+    /// </summary>
+    /// <param name="classes">A list of class label strings.</param>
+    /// <returns>True if labels are successfully loaded, false otherwise.</returns>
     public bool LabelCategories(List<string> classes)
     {
         if (classes == null || classes.Count == 0)
@@ -153,6 +175,12 @@ public class ModelPredict
         return true;
     }
     
+    /// <summary>
+    /// Runs inference on the given image and saves prediction results including bounding boxes, labels, scores, and masks (if applicable).
+    /// </summary>
+    /// <param name="inputImg">The input image (OpenCvSharp Mat) to run inference on.</param>
+    /// <param name="scoreThresh">Score threshold to filter low-confidence detections. Default is 0.7.</param>
+    /// <returns>True if inference runs successfully, false otherwise.</returns>
     public bool PredictAction(Mat inputImg, float scoreThresh = 0.7f)
     {
         // Clear previous results
@@ -218,7 +246,7 @@ public class ModelPredict
 
         float[] pred = outputData[0].Item1;
         long[] shapePred = outputData[0].Item2;
-        int nc = unchecked((int)shapePred[2]) - 1 - 4;   
+        int nc = unchecked((int)shapePred[2]) - 1 - 4;
 
         float[] predMasksProto = null;
         long[] shapePredMasksProto = null;
@@ -296,12 +324,28 @@ public class ModelPredict
     // public List<List<Point2f>> GetMinBoundingBoxes() { return null; }
     // public List<float> GetBoundingBoxAngles() { return null; }
 
+    /// <summary>
+    /// Gets the list of predicted bounding boxes from the last inference.
+    /// </summary>
+    /// <returns>A list of bounding boxes represented by float arrays [x1, y1, x2, y2].</returns>
     public List<float[]> GetBoundingBoxes() => bboxes_;
 
+    /// <summary>
+    /// Gets the list of instance masks predicted in the last inference.
+    /// </summary>
+    /// <returns>A list of OpenCvSharp Mat objects representing binary masks.</returns>
     public List<Mat> GetPredictMasks() => masks_;
 
+    /// <summary>
+    /// Gets the list of class labels predicted in the last inference.
+    /// </summary>
+    /// <returns>A list of integer class indices corresponding to detected objects.</returns>
     public List<int> GetPredictLabels() => labels_;
 
+    /// <summary>
+    /// Gets the list of confidence scores for each detection from the last inference.
+    /// </summary>
+    /// <returns>A list of float values representing prediction confidences.</returns>
     public List<float> GetPredictScores() => scores_;
 
 
