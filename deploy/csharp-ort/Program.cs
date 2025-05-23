@@ -12,15 +12,19 @@ class Program
         string imgDir = "../../../imgs";
         string categoriesPath = "../../../models/labels_algae.txt";
         string saveDir = "../../../runs";
+        string videoDir = Path.Combine(saveDir, "video");
+        string videoPath = Path.Combine(videoDir, "inference_result.mp4");
+
+        // Ensure output directories exist
+        Directory.CreateDirectory(saveDir);
+        Directory.CreateDirectory(videoDir);
 
         // Load image file names
         List<string> imgPaths, imgNames;
         ReadFileNamesInDir(imgDir, out imgPaths, out imgNames);
 
-        // Create ModelPredict instance (adjust GPU settings as needed)
-        var modelPredict = new ModelPredict(withGpu: false, deviceId: 0, thread: 1);
+        var modelPredict = new ModelPredict(withGpu: true, deviceId: 0, thread: 1);
 
-        // Load the model
         bool loaded = modelPredict.LoadModel(modelPath, ModelPredict.TaskType.InstanceSeg);
         if (!loaded)
         {
@@ -28,14 +32,19 @@ class Program
             return;
         }
 
-        // Load categories
         List<string> categories = LoadCategories(categoriesPath);
         modelPredict.LabelCategories(categories);
 
-        // Create inference render
         var infRender = new Renderer(categories);
 
         Console.WriteLine($"INFO: All inference images: {imgPaths.Count}");
+
+        // MP4 settings
+        int frameWidth = 800;
+        int frameHeight = 600;
+        int fps = 2;                // 100ms per frame
+        int fourcc = VideoWriter.FourCC('a', 'v', 'c', '1');
+        using var videoWriter = new VideoWriter(videoPath, fourcc, fps, new Size(frameWidth, frameHeight));
 
         for (int i = 0; i < imgPaths.Count; i++)
         {
@@ -53,19 +62,24 @@ class Program
                 modelPredict.GetPredictLabels(),
                 modelPredict.GetPredictScores());
 
+            // Resize for video
+            Cv2.Resize(resultImg, resultImg, new Size(frameWidth, frameHeight));
+
             // Display
             string winName = "Inference result";
             Cv2.NamedWindow(winName, WindowFlags.Normal);
-            Cv2.ResizeWindow(winName, 800, 600);
             Cv2.ImShow(winName, resultImg);
-            Cv2.WaitKey(10);
-            
+            Cv2.WaitKey(10);    
+
             // Save image
             string savePath = Path.Combine(saveDir, imgNames[i]);
             Cv2.ImWrite(savePath, resultImg);
+
+            // Write video frame
+            videoWriter.Write(resultImg);
         }
 
-        Console.WriteLine("Inference done.");
+        Console.WriteLine($"Inference done. MP4 video saved to: {videoPath}");
     }
 
     static void ReadFileNamesInDir(string dirPath, out List<string> fullPaths, out List<string> fileNames)

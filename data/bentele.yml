@@ -1,0 +1,10 @@
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: /media/gilbertpan/T7/YF-25004-本特勒漏孔检测/workspace/yolo/train.txt  # number of training images
+val: /media/gilbertpan/T7/YF-25004-本特勒漏孔检测/workspace/yolo/val.txt      # number of validation images
+test: /media/gilbertpan/T7/YF-25004-本特勒漏孔检测/workspace/yolo/test.txt    # number of test images
+
+# number of classes
+nc: 1
+
+# class names
+names: [ 'workpiece' ]
